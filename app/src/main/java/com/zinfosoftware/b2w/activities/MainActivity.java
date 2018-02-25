@@ -1,20 +1,17 @@
 package com.zinfosoftware.b2w.activities;
 
 import android.Manifest;
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
-import android.graphics.Rect;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -23,26 +20,27 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Toast;
 
 import com.zinfosoftware.b2w.ProdAdapter;
 import com.zinfosoftware.b2w.R;
+import com.zinfosoftware.b2w.auxiliar.GridSpacingItemDecoration;
 import com.zinfosoftware.b2w.auxiliar.Logs;
-import com.zinfosoftware.b2w.model.ConsultaProdutos;
 import com.zinfosoftware.b2w.model.Produto;
-import com.zinfosoftware.b2w.network.ConsultaServico;
+import com.zinfosoftware.b2w.mvp.MVP;
+import com.zinfosoftware.b2w.mvp.Presenter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MVP.IView {
     //variaveis de controle
     public static final String TAG = "MainActivity";
     private final static int PERMISSAO = 120;
+    //mvp
+    private static MVP.IPresenter presenter;
     //variaveis globais
     private RecyclerView recyclerView;
     private ProdAdapter adapter;
@@ -52,27 +50,36 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setLogo(R.drawable.americanas_bar);
         toolbar.setTitle("");
         setSupportActionBar(toolbar);
-
-        //inicializa variaveis globais
-        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        List<Produto> prodList = new ArrayList<>();
-        adapter = new ProdAdapter(this, prodList);
-        //definindo o recyclerView
-        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 2);
-        recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(adapter);
+        //mvp
+        if (presenter == null) {
+            presenter = new Presenter();
+        }
+        presenter.setView(this);
         //orientação da tela somente na vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         //utilizado na pesquisa
         hendleSearch(getIntent());
 
         Logs.Info(TAG, "onCreate", this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        //inicializando o recyclerView
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        adapter = new ProdAdapter(this, new ArrayList<Produto>());
+        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 2);
+        recyclerView.setLayoutManager(mLayoutManager);
+        //RecyclerView item decoration - give equal margin around grid item
+        recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, presenter.dpToPx(10), true));// dpToPx => Converter dp em pixels
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setAdapter(adapter);
     }
 
     @Override
@@ -86,9 +93,9 @@ public class MainActivity extends AppCompatActivity {
             String q = intent.getStringExtra(SearchManager.QUERY);
 
             //toolbar.setTitle(q);
-            atualizar(q);
+            presenter.atualizar(q);
         } else {
-            atualizar("boneco");
+            presenter.atualizar("boneco");
         }
     }
 
@@ -137,22 +144,12 @@ public class MainActivity extends AppCompatActivity {
         return id == R.id.busca || super.onOptionsItemSelected(item);
     }
 
-    private void carregarLista(List<Produto> lista) {
+    public void carregarLista(List<Produto> lista) {
 
         List<Produto> tmp = lista == null ? new ArrayList<Produto>() : lista;
         adapter = new ProdAdapter(this, tmp);
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
-    }
-
-    public void atualizar(String text) {
-        try {
-            TarefaInBackground tarefa = new TarefaInBackground();
-            tarefa.execute(text);
-        } catch (Exception e) {
-            Logs.Erro(TAG, "(Atualizar) " + e.getMessage(), this);
-            Toast.makeText(this, "Erro: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
     }
 
     //Utilizado para verificar permissão
@@ -175,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case PERMISSAO: {
                 // If request is cancelled, the result arrays are empty.
@@ -224,109 +221,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * Converter dp em pixels
-     */
-    private int dpToPx(int dp) {
-        Resources r = getResources();
-        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
-    }
-
-    //Executar tarefa em segundo plano.
-    public class TarefaInBackground extends AsyncTask<String, Void, List<Produto>> {
-        //variaveis
-        private ProgressDialog Dialog = new ProgressDialog(MainActivity.this);
-        private String erro;
-
-        @Override
-        protected void onPreExecute() {
-            try {
-                Dialog.setMessage("Pesquisando Produtos...");
-                Dialog.setCancelable(false);
-                Dialog.show();
-            } catch (Exception er) {
-
-            }
-            erro = "";
-        }
-
-        @Override
-        protected List<Produto> doInBackground(String... params) {
-
-            try {
-                String busca = params[0];
-                ConsultaServico consultaServico = new ConsultaServico(MainActivity.this);
-                ConsultaProdutos ret = consultaServico.getProdutos(busca, 10);
-                return ret.getProdutos();
-            } catch (Exception er) {
-                erro = "Erro ao receber dados!";
-            }
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Produto> lista) {
-
-            try {
-                Dialog.dismiss();
-            } catch (Exception er) {
-                Logs.Erro(TAG, er.getMessage(), MainActivity.this);
-            }
-
-            if (erro.equals("")) {
-                if (lista == null || lista.size() < 1)
-                    Toast.makeText(MainActivity.this, "Produto não localizado", Toast.LENGTH_LONG).show();
-                carregarLista(lista);
-            } else {
-                Toast.makeText(MainActivity.this, erro, Toast.LENGTH_LONG).show();
-                Logs.Erro(TAG, erro, MainActivity.this);
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-
-            super.onCancelled();
-        }
-    }
-
-    /**
-     * RecyclerView item decoration - give equal margin around grid item
-     */
-    public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
-
-        private int spanCount;
-        private int spacing;
-        private boolean includeEdge;
-
-        public GridSpacingItemDecoration(int spanCount, int spacing, boolean includeEdge) {
-            this.spanCount = spanCount;
-            this.spacing = spacing;
-            this.includeEdge = includeEdge;
-        }
-
-        @Override
-        public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-            int position = parent.getChildAdapterPosition(view); // item position
-            int column = position % spanCount; // item column
-
-            if (includeEdge) {
-                outRect.left = spacing - column * spacing / spanCount; // spacing - column * ((1f / spanCount) * spacing)
-                outRect.right = (column + 1) * spacing / spanCount; // (column + 1) * ((1f / spanCount) * spacing)
-
-                if (position < spanCount) { // top edge
-                    outRect.top = spacing;
-                }
-                outRect.bottom = spacing; // item bottom
-            } else {
-                outRect.left = column * spacing / spanCount; // column * ((1f / spanCount) * spacing)
-                outRect.right = spacing - (column + 1) * spacing / spanCount; // spacing - (column + 1) * ((1f /    spanCount) * spacing)
-                if (position >= spanCount) {
-                    outRect.top = spacing; // item top
-                }
-            }
-        }
+    @Override
+    public void showToast(String mensagem) {
+        Toast.makeText(this, mensagem, Toast.LENGTH_LONG).show();
     }
 
 }
