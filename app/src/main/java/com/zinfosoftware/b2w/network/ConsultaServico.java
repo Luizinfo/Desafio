@@ -10,18 +10,12 @@ import com.zinfosoftware.b2w.model.ConsultaProd;
 import com.zinfosoftware.b2w.model.ConsultaProdutos;
 import com.zinfosoftware.b2w.model.Produto;
 
-/**
- * Criado por almeidala em 26/12/2016.
- */
-
 public class ConsultaServico {
 
-    private String UrlServer = "";
     private Context ct;
     private String TAG = "ConsultaServico";
 
     public ConsultaServico(Context ct) {
-        UrlServer = Controle.SERVIDOR;
         this.ct = ct;
     }
 
@@ -29,7 +23,7 @@ public class ConsultaServico {
 
         //VARIAVEIS
         ConsultaProd consultaProd;
-        String url = UrlServer + "catalogo/product-without-promotion/4?id=" + id +
+        String url = Controle.SERVIDOR_RESTQL + "catalogo/product-without-promotion/4?id=" + id +
                 "&offerLimit=1&opn=&tags=prebf%2A%7CSUL_SUDESTE_CENTRO%7Clivros_prevenda";
         ConexaoHttp obj = new ConexaoHttp(ct);
         Gson gson = new Gson(); // gson original
@@ -56,7 +50,7 @@ public class ConsultaServico {
 
         //VARIAVEIS
         ConsultaProdutos consultaProdutos;
-        String url = "https://mystique-v1-americanas.b2w.io/mystique/nanookautocomplete?q=" + descricao +
+        String url = Controle.SERVIDOR_MYSTIQUE + "mystique/nanookautocomplete?q=" + descricao +
                 "&type=1&numsugestoes=2&numprods=" + qtd;
         ConexaoHttp obj = new ConexaoHttp(ct);
         Gson gson = new Gson();
@@ -65,8 +59,8 @@ public class ConsultaServico {
             retorno = obj.getUrl(url);
             consultaProdutos = gson.fromJson(retorno, ConsultaProdutos.class);
 
-            for (Produto prod:consultaProdutos.getProdutos()
-                 ) {
+            for (Produto prod : consultaProdutos.getProdutos()
+                    ) {
                 prod.setImagemBitmap(getImagem(prod.getImagem()));
             }
         } catch (Exception e) {

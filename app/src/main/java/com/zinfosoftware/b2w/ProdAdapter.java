@@ -76,14 +76,14 @@ public class ProdAdapter extends RecyclerView.Adapter<ProdAdapter.MyViewHolder> 
 
     class MyViewHolder extends RecyclerView.ViewHolder {
 
-        TextView nome, valor, parcelado, avaliacao;
+        TextView nome, valor;
         ImageView imagem;
 
         MyViewHolder(View view) {
             super(view);
-            nome = (TextView) view.findViewById(R.id.nome);
-            valor = (TextView) view.findViewById(R.id.valor);
-            imagem = (ImageView) view.findViewById(R.id.imagem);
+            nome = view.findViewById(R.id.nome);
+            valor = view.findViewById(R.id.valor);
+            imagem = view.findViewById(R.id.imagem);
         }
 
     }

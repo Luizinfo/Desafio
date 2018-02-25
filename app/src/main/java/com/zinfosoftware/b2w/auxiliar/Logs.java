@@ -46,7 +46,7 @@ public class Logs {
     }
 
     private static void gravarLog(String TAG, String texto, Context ct) {
-        final File DATABASE_DIRECTORY = new File(Environment.getExternalStorageDirectory(), "IC");
+        final File DATABASE_DIRECTORY = new File(Environment.getExternalStorageDirectory(), "LOG");
         FileWriter fileWriter = null;
 
         try {
@@ -64,12 +64,12 @@ public class Logs {
                 //fim
 
                 //testa se arquivo existe.
-                File file = new File(DATABASE_DIRECTORY, "LogsIC.txt");
+                File file = new File(DATABASE_DIRECTORY, "Logs.txt");
                 if (file.length() > 1048576) { //3145728 - para 3Mb
                     //apaga arquivo se for maior que 1Mb
                     file.delete();
                     // Cria o arquivo onde serão salvas as informações.
-                    file = new File(DATABASE_DIRECTORY, "LogsIC.txt");
+                    file = new File(DATABASE_DIRECTORY, "Logs.txt");
                 }
                 fileWriter = new FileWriter(file, true);
 
@@ -78,7 +78,6 @@ public class Logs {
                 String data = postFormater1.format(dt);
                 String AppName = ct.getResources().getString(R.string.app_name);
 
-                //fileWriter.append(data + " | " + AppName + " | " + TAG + " | " + texto + System.lineSeparator());
                 fileWriter.write((data + " | " + AppName + " | " + TAG + " | " + texto));
                 fileWriter.write(System.getProperty("line.separator"));
                 // Escreve no arquivo.

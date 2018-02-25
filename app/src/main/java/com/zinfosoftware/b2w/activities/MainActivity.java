@@ -40,42 +40,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    //variaveis de controle
     public static final String TAG = "MainActivity";
     private final static int PERMISSAO = 120;
-    //variaveis para os cards
+    //variaveis globais
     private RecyclerView recyclerView;
     private ProdAdapter adapter;
-    private List<Produto> prodList;
-    private boolean aguarde = false;
-    private Toolbar toolbar;
+    private boolean aguarde;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         toolbar.setLogo(R.drawable.americanas_bar);
         toolbar.setTitle("");
         setSupportActionBar(toolbar);
 
         //inicializa variaveis globais
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        prodList = new ArrayList<>();
+        List<Produto> prodList = new ArrayList<>();
         adapter = new ProdAdapter(this, prodList);
-
-//        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
-//        recyclerView.setLayoutManager(mLayoutManager);
-//        recyclerView.setItemAnimator(new DefaultItemAnimator());
-//        recyclerView.setAdapter(adapter);
-
+        //definindo o recyclerView
         RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.addItemDecoration(new GridSpacingItemDecoration(2, dpToPx(10), true));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(adapter);
-
+        //orientação da tela somente na vertical
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
+        //utilizado na pesquisa
         hendleSearch(getIntent());
 
         Logs.Info(TAG, "onCreate", this);
@@ -91,10 +85,9 @@ public class MainActivity extends AppCompatActivity {
         if (Intent.ACTION_SEARCH.equalsIgnoreCase(intent.getAction())) {
             String q = intent.getStringExtra(SearchManager.QUERY);
 
-            toolbar.setTitle(q);
+            //toolbar.setTitle(q);
             atualizar(q);
-        }
-        else {
+        } else {
             atualizar("boneco");
         }
     }
@@ -117,9 +110,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        //adiciona itens do menu
         getMenuInflater().inflate(R.menu.menu_principal, menu);
 
+        //utilizado para pesquisa no toolbar
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         SearchView searchView;
         MenuItem item = menu.findItem(R.id.busca);
@@ -140,23 +134,12 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         int id = item.getItemId();
-
-        if (id == R.id.busca) {
-            //startActivity(new Intent(this, ConfigActivity.class));
-            return true;
-        } else if (id == R.id.atualizar) {
-            atualizar("boneco");
-            //Toast.makeText(this, "Atualizando...", Toast.LENGTH_LONG).show();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+        return id == R.id.busca || super.onOptionsItemSelected(item);
     }
 
     private void carregarLista(List<Produto> lista) {
 
         List<Produto> tmp = lista == null ? new ArrayList<Produto>() : lista;
-
         adapter = new ProdAdapter(this, tmp);
         recyclerView.setAdapter(adapter);
         adapter.notifyDataSetChanged();
@@ -172,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Utilizado para verificar permissão
     private boolean VerificaPermissao() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
@@ -204,13 +188,14 @@ public class MainActivity extends AppCompatActivity {
 
                 } else {
                     Logs.Erro(TAG, "Permissão de WRITE_EXTERNAL_STORAGE ou READ_PHONE_STATE negada!", this);
-                    InformarPermissaoNegada();
+                    informarPermissaoNegada();
                 }
             }
         }
     }
 
-    public void InformarPermissaoNegada() {
+    //notificar caso a permissão seja obrigatória
+    public void informarPermissaoNegada() {
 
         aguarde = true;
 
@@ -240,13 +225,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Converting dp to pixel
+     * Converter dp em pixels
      */
     private int dpToPx(int dp) {
         Resources r = getResources();
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
     }
 
+    //Executar tarefa em segundo plano.
     public class TarefaInBackground extends AsyncTask<String, Void, List<Produto>> {
         //variaveis
         private ProgressDialog Dialog = new ProgressDialog(MainActivity.this);
@@ -255,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             try {
-                Dialog.setMessage("Baixando Produtos...");
+                Dialog.setMessage("Pesquisando Produtos...");
                 Dialog.setCancelable(false);
                 Dialog.show();
             } catch (Exception er) {

@@ -145,8 +145,6 @@ class ConexaoHttp {
             objUrlConnection.setRequestMethod("POST");
             objUrlConnection.setDoOutput(true);
             objUrlConnection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-
-            //objUrlConnection.setRequestProperty("Authorization", "IC " + LibKey.getKey());
             objUrlConnection.connect();
 
             OutputStream os = objUrlConnection.getOutputStream();
