@@ -2,4 +2,6 @@
     <string name="app_name">B2W</string>
     <string name="title_activity_main">B2W</string>
     <string name="search_hint">Pesquisar</string>
+    <string name="imagem_description">Imagem</string>
+    <string name="pesquisar">Pesquisar</string>
 </resources>

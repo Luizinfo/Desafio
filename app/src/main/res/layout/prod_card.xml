@@ -12,7 +12,7 @@
         android:layout_gravity="center"
         android:layout_margin="@dimen/card_margin"
         android:elevation="3dp"
-        card_view:cardCornerRadius="@dimen/card_album_radius">
+        card_view:cardCornerRadius="@dimen/card_radius">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -21,52 +21,35 @@
             <ImageView
                 android:id="@+id/imagem"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/album_cover_height"
+                android:layout_height="@dimen/card_img_height"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:clickable="true"
                 android:scaleType="fitXY"
-                android:focusable="true" />
+                android:focusable="true"
+                android:contentDescription="@string/imagem_description" />
 
             <TextView
                 android:id="@+id/nome"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/imagem"
-                android:paddingLeft="@dimen/album_title_padding"
-                android:paddingRight="@dimen/album_title_padding"
-                android:paddingTop="@dimen/album_title_padding"
-                android:textColor="@color/app_title"
-                android:textSize="@dimen/album_title" />
-
-            <TextView
-                android:id="@+id/avaliacao"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/nome"
-                android:paddingBottom="@dimen/songs_count_padding_bottom"
-                android:paddingLeft="@dimen/album_title_padding"
-                android:paddingRight="@dimen/album_title_padding"
-                android:textSize="@dimen/songs_count" />
+                android:paddingLeft="@dimen/card_title_padding"
+                android:paddingRight="@dimen/card_title_padding"
+                android:paddingTop="@dimen/card_title_padding"
+                android:textColor="@color/card_name_color"
+                android:textSize="@dimen/card_title" />
 
             <TextView
                 android:id="@+id/valor"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@id/avaliacao"
-                android:paddingBottom="@dimen/songs_count_padding_bottom"
-                android:paddingLeft="@dimen/album_title_padding"
-                android:paddingRight="@dimen/album_title_padding"
-                android:textSize="@dimen/songs_count" />
-
-            <TextView
-                android:id="@+id/parcelado"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/valor"
-                android:paddingBottom="@dimen/songs_count_padding_bottom"
-                android:paddingLeft="@dimen/album_title_padding"
-                android:paddingRight="@dimen/album_title_padding"
-                android:textSize="@dimen/songs_count" />
+                android:layout_below="@id/nome"
+                android:layout_alignParentBottom="true"
+                android:paddingBottom="@dimen/valor_padding_bottom"
+                android:paddingLeft="@dimen/card_title_padding"
+                android:paddingRight="@dimen/card_title_padding"
+                android:textSize="@dimen/card_valor"
+                android:textColor="@color/colorAccent"/>
 
         </RelativeLayout>
 

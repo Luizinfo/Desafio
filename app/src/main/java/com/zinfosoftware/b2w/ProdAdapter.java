@@ -12,7 +12,9 @@ import android.widget.Toast;
 import com.zinfosoftware.b2w.auxiliar.Logs;
 import com.zinfosoftware.b2w.model.Produto;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class ProdAdapter extends RecyclerView.Adapter<ProdAdapter.MyViewHolder> {
 
@@ -39,7 +41,8 @@ public class ProdAdapter extends RecyclerView.Adapter<ProdAdapter.MyViewHolder> 
 
         holder.nome.setText(produto.getDescricao());
 
-        holder.valor.setText("R$ " + produto.getPreco());
+        NumberFormat nf = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+        holder.valor.setText(nf.format(Double.parseDouble(produto.getPreco())));
 //        holder.parcelado.setText(produto.getInstallment().getResult().get(0).getQuantity().toString() +" x "+
 //                produto.getInstallment().getResult().get(0).getValue().toString());
 //        holder.avaliacao.setText("5");
@@ -80,9 +83,7 @@ public class ProdAdapter extends RecyclerView.Adapter<ProdAdapter.MyViewHolder> 
             super(view);
             nome = (TextView) view.findViewById(R.id.nome);
             valor = (TextView) view.findViewById(R.id.valor);
-            parcelado = (TextView) view.findViewById(R.id.parcelado);
             imagem = (ImageView) view.findViewById(R.id.imagem);
-            avaliacao = (TextView) view.findViewById(R.id.avaliacao);
         }
 
     }

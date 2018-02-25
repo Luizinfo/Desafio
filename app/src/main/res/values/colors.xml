@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">#e70014</color>
     <color name="colorPrimaryDark">#d40113</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorAccent">#1818e4</color>
 
-    <color name="app_title">#4c4c4c</color>
+    <color name="card_name_color">#4c4c4c</color>
 </resources>

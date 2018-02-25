@@ -2,6 +2,8 @@ package com.zinfosoftware.b2w.activities;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -10,13 +12,16 @@ import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -27,7 +32,6 @@ import android.widget.Toast;
 import com.zinfosoftware.b2w.ProdAdapter;
 import com.zinfosoftware.b2w.R;
 import com.zinfosoftware.b2w.auxiliar.Logs;
-import com.zinfosoftware.b2w.model.ConsultaProd;
 import com.zinfosoftware.b2w.model.ConsultaProdutos;
 import com.zinfosoftware.b2w.model.Produto;
 import com.zinfosoftware.b2w.network.ConsultaServico;
@@ -43,12 +47,13 @@ public class MainActivity extends AppCompatActivity {
     private ProdAdapter adapter;
     private List<Produto> prodList;
     private boolean aguarde = false;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setLogo(R.drawable.americanas_bar);
         toolbar.setTitle("");
         setSupportActionBar(toolbar);
@@ -71,12 +76,31 @@ public class MainActivity extends AppCompatActivity {
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        hendleSearch(getIntent());
+
         Logs.Info(TAG, "onCreate", this);
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        hendleSearch(intent);
+    }
 
+    public void hendleSearch(Intent intent) {
+        if (Intent.ACTION_SEARCH.equalsIgnoreCase(intent.getAction())) {
+            String q = intent.getStringExtra(SearchManager.QUERY);
+
+            toolbar.setTitle(q);
+            atualizar(q);
+        }
+        else {
+            atualizar("boneco");
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
         Logs.Info(TAG, "onDestroy", this);
         super.onDestroy();
     }
@@ -84,23 +108,31 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-
     }
 
     @Override
     protected void onResume() {
-        if (!aguarde) {
-            if (VerificaPermissao())
-                atualizar();
-        }
         super.onResume();
-
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_principal, menu);
+
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView;
+        MenuItem item = menu.findItem(R.id.busca);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            searchView = (SearchView) item.getActionView();
+        } else {
+            searchView = (SearchView) MenuItemCompat.getActionView(item);
+        }
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setQueryHint(getResources().getString(R.string.search_hint));
+
         return true;
     }
 
@@ -109,11 +141,11 @@ public class MainActivity extends AppCompatActivity {
 
         int id = item.getItemId();
 
-        if (id == R.id.configurar) {
+        if (id == R.id.busca) {
             //startActivity(new Intent(this, ConfigActivity.class));
             return true;
         } else if (id == R.id.atualizar) {
-            atualizar();
+            atualizar("boneco");
             //Toast.makeText(this, "Atualizando...", Toast.LENGTH_LONG).show();
             return true;
         }
@@ -130,10 +162,10 @@ public class MainActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
-    public void atualizar() {
+    public void atualizar(String text) {
         try {
             TarefaInBackground tarefa = new TarefaInBackground();
-            tarefa.execute();
+            tarefa.execute(text);
         } catch (Exception e) {
             Logs.Erro(TAG, "(Atualizar) " + e.getMessage(), this);
             Toast.makeText(this, "Erro: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -145,11 +177,11 @@ public class MainActivity extends AppCompatActivity {
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
 
-                ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                                android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                                android.Manifest.permission.READ_PHONE_STATE},
-                        PERMISSAO);
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                            android.Manifest.permission.READ_PHONE_STATE},
+                    PERMISSAO);
 
             Logs.Erro(TAG, "WRITE_EXTERNAL_STORAGE sem Permissão!", this);
             return false;
@@ -215,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics()));
     }
 
-    public class TarefaInBackground extends AsyncTask<Void, Void, List<Produto>> {
+    public class TarefaInBackground extends AsyncTask<String, Void, List<Produto>> {
         //variaveis
         private ProgressDialog Dialog = new ProgressDialog(MainActivity.this);
         private String erro;
@@ -233,11 +265,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected List<Produto> doInBackground(Void... params) {
+        protected List<Produto> doInBackground(String... params) {
 
             try {
+                String busca = params[0];
                 ConsultaServico consultaServico = new ConsultaServico(MainActivity.this);
-                ConsultaProdutos ret = consultaServico.getProdutos("boneco",10);
+                ConsultaProdutos ret = consultaServico.getProdutos(busca, 10);
                 return ret.getProdutos();
             } catch (Exception er) {
                 erro = "Erro ao receber dados!";

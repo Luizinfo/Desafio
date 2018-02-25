@@ -1,15 +1,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/configurar"
+        android:id="@+id/busca"
         android:orderInCategory="100"
-        android:title="Configurar"
-        app:showAsAction="always"
-        android:icon="@drawable/ic_refresh_black_24dp" />
+        android:title="@string/pesquisar"
+        app:showAsAction="ifRoom|collapseActionView"
+        android:icon="@drawable/ic_search_black_24dp"
+        app:actionViewClass="android.support.v7.widget.SearchView" />
 
     <item
         android:id="@+id/atualizar"
-        android:orderInCategory="101"
+        android:orderInCategory="100"
         app:showAsAction="always"
         android:title="Atualizar"
         android:icon="@drawable/ic_refresh_black_24dp"/>
